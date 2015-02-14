@@ -9,21 +9,26 @@ class EventBus(object):
     def register(self, obj):
         self.listeners.append(obj)
 
-    # TODO: The bus should emit events only to potentiall interested parties, not globally.
     def emit(self, event):
         for listener in self.listeners:
             listener.receive(event)
 
 
 class Model(object):
+    def __init__(self, name):
+        self.name = name
+        self.presenters = []
+
     def get(self, id):
         raise Exception("not implemented")
 
     def set(self, id, data):
-        raise Exception("not implemented")
+        for p in self.presenters:
+            p.redraw(self)
 
 class DictModel(Model):
-    def __init__(self):
+    def __init__(self, name):
+        super(DictModel, self).__init__(name)
         self.data = {}
 
     def get(self, id):
@@ -34,9 +39,10 @@ class DictModel(Model):
 
     def set(self, id, data):
         self.data[id] = data
+        super(DictModel, self).set(id, data)
 
-# e.g. for MoviesModel you can just subclass DictModel and overload get, set
-# s.t. you call super on get, if no hit, then fallback to http and call set of DictModel with result
+# e.g. for HttpModel you can just subclass DictModel and overload get, set s.t. you call
+# super on get, if no hit, then fallback to http and call set of DictModel with result
 
 
 class View(Screen):
@@ -44,23 +50,46 @@ class View(Screen):
         super(View, self).__init__(**kwargs)
         self.presenter = presenter
 
+    def _update(self, data):
+        raise Exception("not implemented")
+
+    def set(self, data):
+        self._update(data)
+        self.canvas.ask_update()
+
     def emit(self, event):
-        print "view emit:", event
-        self.presenter.receive(event)
+        self.presenter.userEvent(event)
 
 # a View is just a small wrapper around kivy screens; no need for lots of functionality here.
 
 
 class Presenter(object):
-    def __init__(self, ctrl, viewClass, model):
-        self.viewClass = viewClass
-        self.model = model
+    def __init__(self, ctrl, viewClass, models):
         self.bus = ctrl.bus
+        self.view = viewClass(self, name=self._name())
+        ctrl.sm.add_widget(self.view)
+        self.models = {}
+        for model in models:
+            self.models[model.name] = model
+            model.presenters.append(self)
+            self.redraw(model)
+
+    def _name(self):
+        raise Exception("not implemented")
 
     def emit(self, event):
         self.bus.emit(event)
 
+    # generic event from app controller or other presenter
     def receive(self, e):
+        pass
+
+    # associated view notifies us of user event, update model appropriately
+    def userEvent(self, e):
+        raise Exception("not implemented")
+
+    # model notfies us of update, refresh the view
+    def redraw(self, model):
         raise Exception("not implemented")
 
 
@@ -82,38 +111,29 @@ class AppController(object):
 
         self.app = KivyMVPApp()
 
-    def _init_view(self, name):
-        pres = self.presenters[name]
-        pres.view = pres.viewClass(pres, name=name)
-        print pres.view
-        self.sm.add_widget(pres.view)
-
     def go(self, firstView):
-        for pres in self.presenters:
-            print "INIT *** " + pres
-            self._init_view(pres)
         self.sm.current = firstView
         self.app.run()
 
     def receive(self, e):
         raise Exception("not implemented")
 
-    def add(self, name, pres):
-        if name in self.presenters:
+    def add(self, pres):
+        if pres._name() in self.presenters:
             raise Exception("presenter with name %s exists" % name)
-        self.presenters[name] = pres
+        self.presenters[pres._name()] = pres
         self.bus.register(pres)
 
 
 if __name__ == '__main__':
     import time
     from kivy.graphics import Color, Rectangle
-    from kivy.uix.floatlayout import FloatLayout
     from kivy.uix.button import Button
+    from kivy.uix.floatlayout import FloatLayout
+    from kivy.uix.label import Label
 
     class TestAppController(AppController):
         def receive(self, e):
-            print "testapp receive:", e
             if e == "switch":
                 for p in self.presenters:
                     if self.sm.current != p:
@@ -122,23 +142,39 @@ if __name__ == '__main__':
 
     ctrl = TestAppController()
 
-    # TODO: use model in example
-    model = DictModel()
-    model.set(1, "string a")
-    model.set(2, "string b")
+    model = DictModel("aSingleNumber")
+    model.set(0, 0)
 
-    # These are very simple presenters in this example.
+    # This is a very basic example. Of course we should not duplicate code
+    # for such a small difference in functionality. It is just to outlines
+    # how the framework is intended to be used.
     class BlackPresenter(Presenter):
-        def receive(self, e):
-            print "black_pres receive:", e
+        def _name(self):
+            return "black"
+
+        def userEvent(self, e):
             if e == "done":
                 self.emit("switch")
+            elif e == "add":
+                x = self.models["aSingleNumber"].get(0)
+                self.models["aSingleNumber"].set(0, x+1)
+
+        def redraw(self, m):
+            self.view.set(str(m.get(0)))
 
     class WhitePresenter(Presenter):
-        def receive(self, e):
-            print "white_pres receive:", e
+        def _name(self):
+            return "white"
+
+        def userEvent(self, e):
             if e == "done":
                 self.emit("switch")
+            elif e == "subtract":
+                x = self.models["aSingleNumber"].get(0)
+                self.models["aSingleNumber"].set(0, x-1)
+
+        def redraw(self, m):
+            self.view.set(str(m.get(0)))
 
     class ColorLayout(FloatLayout):
         def __init__(self, color, **kwargs):
@@ -157,28 +193,45 @@ if __name__ == '__main__':
             super(BlackView, self).__init__(presenter, **kwargs)
             with self.canvas:
                 f = ColorLayout((0,0,0,1))
+                self.l = Label(text="TEST", size_hint=(1, 0.25), pos_hint={ "x":0, "y":0.8 },
+                     color=(0.75, 0.75, 0.75, 1), font_size=60)
+                f.add_widget(self.l)
+                b = Button(text='add', font_size=20, size_hint=(1, 0.25),
+                    pos_hint={ "x":0, "y":0.25 })
+                b.bind(on_press=lambda x: self.emit("add"))
+                f.add_widget(b)
                 b = Button(text='to white', font_size=20, size_hint=(1, 0.25))
                 b.bind(on_press=lambda x: self.emit("done"))
                 f.add_widget(b)
                 self.add_widget(f)
+
+        def _update(self, data):
+            self.l.text = data
 
     class WhiteView(View):
         def __init__(self, presenter, **kwargs):
             super(WhiteView, self).__init__(presenter, **kwargs)
             with self.canvas:
                 f = ColorLayout((1,1,1,1))
+                self.l = Label(text="TEST", size_hint=(1, 0.25), pos_hint={ "x":0, "y":0.8 },
+                    color=(0.75, 0.75, 0.75, 1), font_size=60)
+                f.add_widget(self.l)
+                b = Button(text='subtract', font_size=20, size_hint=(1, 0.25),
+                    pos_hint={ "x":0, "y":0.25 })
+                b.bind(on_press=lambda x: self.emit("subtract"))
+                f.add_widget(b)
                 b = Button(text='to black', font_size=20, size_hint=(1, 0.25))
                 b.bind(on_press=lambda x: self.emit("done"))
                 f.add_widget(b)
                 self.add_widget(f)
 
-    black_pres = BlackPresenter(ctrl, BlackView, model)
-    white_pres = WhitePresenter(ctrl, WhiteView, model)
+        def _update(self, data):
+            self.l.text = data
 
-    # Instantiating the view triggers the display unfortunately, i.e. we can see
-    # when starting the white view briefly. This should be fixed either by
-    # not instantiating before actually viewing s.th. or in some other way.
-    ctrl.add('white', white_pres)
-    ctrl.add('black', black_pres)
+    black_pres = BlackPresenter(ctrl, BlackView, [model])
+    white_pres = WhitePresenter(ctrl, WhiteView, [model])
+
+    ctrl.add(white_pres)
+    ctrl.add(black_pres)
 
     ctrl.go('black')
