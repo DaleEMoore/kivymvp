@@ -2,7 +2,7 @@ from kivy.app import App
 from kivy.uix.screenmanager import Screen, ScreenManager
 
 
-class EventBus(object):
+class __EventBus(object):
     def __init__(self):
         self.listeners = []
 
@@ -95,7 +95,7 @@ class Presenter(object):
 
 class AppController(object):
     def __init__(self):
-        self.bus = EventBus()
+        self.bus = __EventBus()
         self.bus.register(self)
         self.sm = ScreenManager()
         self.presenters = {}
