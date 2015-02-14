@@ -4,6 +4,9 @@ ui framework for kivy following the MVP pattern
 ## why use it
 It provides the M and P for Kivy's V.
 
+## getting started
+Just look at kivymvp.py for a simple example.
+
 ## how does it work
 Views are essentially Kivy screens. They emit user events to and listen for redraw events from their presenter.
 
