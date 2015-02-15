@@ -147,7 +147,7 @@ if __name__ == '__main__':
     model.set(0, 0)
 
     # This is a very basic example. Of course we should not duplicate code
-    # for such a small difference in functionality. It is just to outlines
+    # for such a small difference in functionality. It is just to outline
     # how the framework is intended to be used.
     class BlackPresenter(Presenter):
         def _name(self):
