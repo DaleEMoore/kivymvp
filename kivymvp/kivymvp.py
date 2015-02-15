@@ -91,9 +91,6 @@ class Presenter(object):
 
 
 class AppController(object):
-    # TODO: Provide an encapsulated method for switching between presenters;
-    # as seen in the example code at the end.
-    
     def __init__(self):
         class EventBus(object):
             def __init__(self):
@@ -122,8 +119,14 @@ class AppController(object):
 
         self.app = KivyMVPApp()
 
-    def go(self, firstView):
-        self.sm.current = firstView
+    def current(self):
+        return self.sm.current
+
+    def switch(self, name):
+        self.sm.current = name
+
+    def go(self, first):
+        self.sm.current = first
         self.app.run()
 
     # listen to events from presenters here, e.g. switch triggers
@@ -149,8 +152,8 @@ if __name__ == '__main__':
         def receive(self, e):
             if e == "switch":
                 for p in self.presenters:
-                    if self.sm.current != p:
-                        self.sm.current = p
+                    if self.current() != p:
+                        self.switch(p)
                         break
 
     ctrl = TestAppController()
@@ -162,7 +165,7 @@ if __name__ == '__main__':
     # This is a very basic example. Of course we should not duplicate code
     # for such a small difference in functionality. It is just to outline
     # how the framework is intended to be used.
-    
+
     # The black presenter listens for two user events.
     # If it receives "done" it signals "switch" to the app controller's event bus.
     # (Note: all presenters and the app controller are registered at the event bus
