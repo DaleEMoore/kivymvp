@@ -127,7 +127,6 @@ class AppController(object):
 
 
 if __name__ == '__main__':
-    import time
     from kivy.graphics import Color, Rectangle
     from kivy.uix.button import Button
     from kivy.uix.floatlayout import FloatLayout
