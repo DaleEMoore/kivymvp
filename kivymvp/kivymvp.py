@@ -167,7 +167,7 @@ if __name__ == '__main__':
     # If it receives "done" it signals "switch" to the app controller's event bus.
     # (Note: all presenters and the app controller are registered at the event bus
     #  and can response to events if required)
-    # It it receives an "add" event it retrieves the current number from the model,
+    # If it receives an "add" event it retrieves the current number from the model,
     # increments by one and puts it back into the model.
     # On receiving any event from the model it simply retrieves the currently stored
     # number and instructs the view to update based on it.
@@ -187,9 +187,7 @@ if __name__ == '__main__':
 
     # The white presenter listens for two user events.
     # If it receives "done" it signals "switch" to the app controller's event bus.
-    # (Note: all presenters and the app controller are registered at the event bus
-    #  and can response to events if required)
-    # It it receives an "subtract" event it retrieves the current number from the model,
+    # If it receives an "subtract" event it retrieves the current number from the model,
     # decrements by one and puts it back into the model.
     # On receiving any event from the model it simply retrieves the currently stored
     # number and instructs the view to update based on it.
