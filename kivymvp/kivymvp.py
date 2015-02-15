@@ -135,7 +135,7 @@ class AppController(object):
 
     def add(self, pres):
         if pres._name() in self.presenters:
-            raise Exception("presenter with name %s exists" % name)
+            raise Exception("presenter with name %s exists" % pres._name())
         self.presenters[pres._name()] = pres
         self.bus.register(pres)
 
