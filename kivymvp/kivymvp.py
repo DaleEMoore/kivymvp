@@ -1,7 +1,6 @@
 from kivy.app import App
 from kivy.uix.screenmanager import Screen, ScreenManager
 
-
 class Model(object):
     def __init__(self, name):
         self.name = name
@@ -34,8 +33,11 @@ class DictModel(Model):
     def _set(self, id, data):
         self.data[id] = data
 
-# e.g. for HttpModel you can just subclass DictModel and overload get, set s.t. you call
+# E.g. for HttpModel you can just subclass DictModel and overload get, set s.t. you call
 # super on get, if no hit, then fallback to http and call set of DictModel with result
+
+# More complex models will have new actions. They may also be unrelated to the actual UI
+# and trigger remote actions in some backend.
 
 
 class View(Screen):
@@ -54,7 +56,7 @@ class View(Screen):
     def event(self, e):
         self.presenter.userEvent(e)
 
-# a View is just a small wrapper around kivy screens; no need for lots of functionality here.
+# A View is just a small wrapper around kivy screens; no need for lots of functionality here.
 
 
 class Presenter(object):
@@ -106,6 +108,7 @@ class AppController(object):
         self.presenters = {}
         sm = self.sm
 
+        # TODO: Let's see what we have to expose here.
         class KivyMVPApp(App):
             def build(self):
                 return sm
@@ -137,6 +140,8 @@ if __name__ == '__main__':
     from kivy.uix.floatlayout import FloatLayout
     from kivy.uix.label import Label
 
+    # Our app controller simply listens for "switch" events and switches between
+    # the two presenters, if it receives one.
     class TestAppController(AppController):
         def receive(self, e):
             if e == "switch":
@@ -147,12 +152,22 @@ if __name__ == '__main__':
 
     ctrl = TestAppController()
 
+    # Our model is a simple dictionary containing a single integer at key 0.
     model = DictModel("aSingleNumber")
     model.set(0, 0)
 
     # This is a very basic example. Of course we should not duplicate code
     # for such a small difference in functionality. It is just to outline
     # how the framework is intended to be used.
+    
+    # The black presenter listens for two user events.
+    # If it receives "done" it signals "switch" to the app controller's event bus.
+    # (Note: all presenters and the app controller are registered at the event bus
+    #  and can response to events if required)
+    # It it receives an "add" event it retrieves the current number from the model,
+    # increments by one and puts it back into the model.
+    # On receiving any event from the model it simply retrieves the currently stored
+    # number and instructs the view to update based on it.
     class BlackPresenter(Presenter):
         def _name(self):
             return "black"
@@ -167,6 +182,14 @@ if __name__ == '__main__':
         def modelEvent(self, m, e=None):
             self.view.update(str(m.get(0)))
 
+    # The white presenter listens for two user events.
+    # If it receives "done" it signals "switch" to the app controller's event bus.
+    # (Note: all presenters and the app controller are registered at the event bus
+    #  and can response to events if required)
+    # It it receives an "subtract" event it retrieves the current number from the model,
+    # decrements by one and puts it back into the model.
+    # On receiving any event from the model it simply retrieves the currently stored
+    # number and instructs the view to update based on it.
     class WhitePresenter(Presenter):
         def _name(self):
             return "white"
@@ -181,6 +204,8 @@ if __name__ == '__main__':
         def modelEvent(self, m, e=None):
             self.view.update(str(m.get(0)))
 
+    # This is just a simple layout with a background color such that we can easily
+    # distinguish our two views.
     class ColorLayout(FloatLayout):
         def __init__(self, color, **kwargs):
             super(ColorLayout, self).__init__(**kwargs)
@@ -193,6 +218,11 @@ if __name__ == '__main__':
             self.rect.pos = instance.pos
             self.rect.size = instance.size
 
+    # The black view has a button "add" and a button "to_white" on a black background.
+    # Pressing "add" triggers emits the event "add" and pressing "to white" triggers "done".
+    # When it receives an update event it updates the label text with the new data.
+    # Note that all kivy events should just trigger self.event with the appropriate data to
+    # integrate into the MVP workflow.
     class BlackView(View):
         def __init__(self, presenter, **kwargs):
             super(BlackView, self).__init__(presenter, **kwargs)
@@ -213,6 +243,9 @@ if __name__ == '__main__':
         def _update(self, data):
             self.l.text = data
 
+    # The white view has a button "add" and a button "to_black" on a white background.
+    # Pressing "add" triggers emits the event "add" and pressing "to black" triggers "done".
+    # When it receives an update event it updates the label text with the new data.
     class WhiteView(View):
         def __init__(self, presenter, **kwargs):
             super(WhiteView, self).__init__(presenter, **kwargs)
@@ -239,4 +272,5 @@ if __name__ == '__main__':
     ctrl.add(white_pres)
     ctrl.add(black_pres)
 
+    # Start black.
     ctrl.go('black')
