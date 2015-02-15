@@ -91,6 +91,9 @@ class Presenter(object):
 
 
 class AppController(object):
+    # TODO: Provide an encapsulated method for switching between presenters;
+    # as seen in the example code at the end.
+    
     def __init__(self):
         class EventBus(object):
             def __init__(self):
