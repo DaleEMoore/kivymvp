@@ -2,18 +2,6 @@ from kivy.app import App
 from kivy.uix.screenmanager import Screen, ScreenManager
 
 
-class __EventBus(object):
-    def __init__(self):
-        self.listeners = []
-
-    def register(self, obj):
-        self.listeners.append(obj)
-
-    def emit(self, event):
-        for listener in self.listeners:
-            listener.receive(event)
-
-
 class Model(object):
     def __init__(self, name):
         self.name = name
@@ -24,7 +12,7 @@ class Model(object):
 
     def set(self, id, data):
         for p in self.presenters:
-            p.redraw(self)
+            p.modelEvent(self, id)
 
 class DictModel(Model):
     def __init__(self, name):
@@ -72,7 +60,7 @@ class Presenter(object):
         for model in models:
             self.models[model.name] = model
             model.presenters.append(self)
-            self.redraw(model)
+            self.modelEvent(model)
 
     def _name(self):
         raise Exception("not implemented")
@@ -89,13 +77,23 @@ class Presenter(object):
         raise Exception("not implemented")
 
     # model notfies us of update, refresh the view
-    def redraw(self, model):
+    def modelEvent(self, model, e=None):
         raise Exception("not implemented")
 
 
 class AppController(object):
     def __init__(self):
-        self.bus = __EventBus()
+        class EventBus(object):
+            def __init__(self):
+                self.listeners = []
+
+            def register(self, obj):
+                self.listeners.append(obj)
+
+            def emit(self, event):
+                for listener in self.listeners:
+                    listener.receive(event)
+        self.bus = EventBus()
         self.bus.register(self)
         self.sm = ScreenManager()
         self.presenters = {}
@@ -116,7 +114,7 @@ class AppController(object):
         self.app.run()
 
     def receive(self, e):
-        raise Exception("not implemented")
+        pass
 
     def add(self, pres):
         if pres._name() in self.presenters:
@@ -159,7 +157,7 @@ if __name__ == '__main__':
                 x = self.models["aSingleNumber"].get(0)
                 self.models["aSingleNumber"].set(0, x+1)
 
-        def redraw(self, m):
+        def modelEvent(self, m, e=None):
             self.view.set(str(m.get(0)))
 
     class WhitePresenter(Presenter):
@@ -173,7 +171,7 @@ if __name__ == '__main__':
                 x = self.models["aSingleNumber"].get(0)
                 self.models["aSingleNumber"].set(0, x-1)
 
-        def redraw(self, m):
+        def modelEvent(self, m, e=None):
             self.view.set(str(m.get(0)))
 
     class ColorLayout(FloatLayout):
