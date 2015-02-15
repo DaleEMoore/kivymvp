@@ -16,6 +16,7 @@ Models are just any kind of data storage. They provide CRUD operations and notif
 
 ## roadmap
 As necessary. We are currently building an app using kivymvp and will see how it develops.
+v0.2 will likely be the version corresponding with the one we use for launching a closed beta of a kivy-based product.
 
 ## requirements
 Kivy is of course required. It is not listed in install requirements for setup tools to avoid messing around with setups which use kivy separate from their main python distribution.
