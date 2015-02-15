@@ -7,14 +7,16 @@ class Model(object):
         self.name = name
         self.presenters = []
 
+    # return data for id here
     def get(self, id):
         raise Exception("not implemented")
 
-    def _update(self, id, data):
+    # set data for id here
+    def _set(self, id, data):
         raise Exception("not implemented")
 
     def set(self, id, data):
-        self._update(id, data)
+        self._set(id, data)
         for p in self.presenters:
             p.modelEvent(self, id)
 
@@ -29,7 +31,7 @@ class DictModel(Model):
         else:
             return None
 
-    def _update(self, id, data):
+    def _set(self, id, data):
         self.data[id] = data
 
 # e.g. for HttpModel you can just subclass DictModel and overload get, set s.t. you call
@@ -41,15 +43,16 @@ class View(Screen):
         super(View, self).__init__(**kwargs)
         self.presenter = presenter
 
+    # update view based on new data here
     def _update(self, data):
-        raise Exception("not implemented")
+        pass
 
-    def set(self, data):
+    def update(self, data):
         self._update(data)
         self.canvas.ask_update()
 
-    def emit(self, event):
-        self.presenter.userEvent(event)
+    def event(self, e):
+        self.presenter.userEvent(e)
 
 # a View is just a small wrapper around kivy screens; no need for lots of functionality here.
 
@@ -65,6 +68,7 @@ class Presenter(object):
             model.presenters.append(self)
             self.modelEvent(model)
 
+    # provide name here
     def _name(self):
         raise Exception("not implemented")
 
@@ -77,11 +81,11 @@ class Presenter(object):
 
     # associated view notifies us of user event, update model appropriately
     def userEvent(self, e):
-        raise Exception("not implemented")
+        pass
 
     # model notfies us of update, refresh the view
     def modelEvent(self, model, e=None):
-        raise Exception("not implemented")
+        pass
 
 
 class AppController(object):
@@ -160,7 +164,7 @@ if __name__ == '__main__':
                 self.models["aSingleNumber"].set(0, x+1)
 
         def modelEvent(self, m, e=None):
-            self.view.set(str(m.get(0)))
+            self.view.update(str(m.get(0)))
 
     class WhitePresenter(Presenter):
         def _name(self):
@@ -174,7 +178,7 @@ if __name__ == '__main__':
                 self.models["aSingleNumber"].set(0, x-1)
 
         def modelEvent(self, m, e=None):
-            self.view.set(str(m.get(0)))
+            self.view.update(str(m.get(0)))
 
     class ColorLayout(FloatLayout):
         def __init__(self, color, **kwargs):
@@ -198,10 +202,10 @@ if __name__ == '__main__':
                 f.add_widget(self.l)
                 b = Button(text='add', font_size=20, size_hint=(1, 0.25),
                     pos_hint={ "x":0, "y":0.25 })
-                b.bind(on_press=lambda x: self.emit("add"))
+                b.bind(on_press=lambda x: self.event("add"))
                 f.add_widget(b)
                 b = Button(text='to white', font_size=20, size_hint=(1, 0.25))
-                b.bind(on_press=lambda x: self.emit("done"))
+                b.bind(on_press=lambda x: self.event("done"))
                 f.add_widget(b)
                 self.add_widget(f)
 
@@ -218,10 +222,10 @@ if __name__ == '__main__':
                 f.add_widget(self.l)
                 b = Button(text='subtract', font_size=20, size_hint=(1, 0.25),
                     pos_hint={ "x":0, "y":0.25 })
-                b.bind(on_press=lambda x: self.emit("subtract"))
+                b.bind(on_press=lambda x: self.event("subtract"))
                 f.add_widget(b)
                 b = Button(text='to black', font_size=20, size_hint=(1, 0.25))
-                b.bind(on_press=lambda x: self.emit("done"))
+                b.bind(on_press=lambda x: self.event("done"))
                 f.add_widget(b)
                 self.add_widget(f)
 
