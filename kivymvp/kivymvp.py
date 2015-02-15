@@ -10,7 +10,11 @@ class Model(object):
     def get(self, id):
         raise Exception("not implemented")
 
+    def _update(self, id, data):
+        raise Exception("not implemented")
+
     def set(self, id, data):
+        self._update(id, data)
         for p in self.presenters:
             p.modelEvent(self, id)
 
@@ -25,9 +29,8 @@ class DictModel(Model):
         else:
             return None
 
-    def set(self, id, data):
+    def _update(self, id, data):
         self.data[id] = data
-        super(DictModel, self).set(id, data)
 
 # e.g. for HttpModel you can just subclass DictModel and overload get, set s.t. you call
 # super on get, if no hit, then fallback to http and call set of DictModel with result
