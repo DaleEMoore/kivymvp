@@ -120,6 +120,7 @@ class AppController(object):
         self.sm.current = firstView
         self.app.run()
 
+    # listen to events from presenters here, e.g. switch triggers
     def receive(self, e):
         pass
 
