@@ -21,6 +21,7 @@ class Model(object):
         for p in self.presenters:
             p.modelEvent(self, id)
 
+# Transient Dict Model.
 class DictModel(Model):
     def __init__(self, name):
         super(DictModel, self).__init__(name)
@@ -35,6 +36,25 @@ class DictModel(Model):
     def _set(self, id, data):
         self.data[id] = data
 
+# Persistent JSON Model.
+class JsonModel(Model):
+
+    def __init__(self, name, path_prefix='storage/'):
+        super(JsonModel, self).__init__(name)
+        self.store = JsonStore(path_prefix + name + '.json')
+
+    def get(self, id):
+        if self.store.exists(id):
+            return self.store[id]
+        return None
+
+    def _set(self, id, data):
+        if not data:
+            self.store.delete(id)
+        else:
+            self.store[id] = data
+
+# Transient Rest HTTP Model.
 class RestModel(DictModel):
     # request can be an OAuthRequest specified to your needs or a plain HTTP request.
     def __init__(self, name, request):
