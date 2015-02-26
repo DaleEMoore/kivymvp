@@ -1,5 +1,6 @@
 from kivy.app import App
 from kivy.uix.screenmanager import Screen, ScreenManager
+from kivy.storage.jsonstore import JsonStore
 
 import requests
 
