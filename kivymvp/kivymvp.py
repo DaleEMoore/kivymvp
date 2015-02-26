@@ -1,6 +1,7 @@
 from kivy.app import App
 from kivy.uix.screenmanager import Screen, ScreenManager
 
+import requests
 
 class Model(object):
     def __init__(self, name):
@@ -34,8 +35,38 @@ class DictModel(Model):
     def _set(self, id, data):
         self.data[id] = data
 
-# E.g. for HttpModel you can just subclass DictModel and overload get, set s.t. you call
-# super on get, if no hit, then fallback to http and call set of DictModel with result
+class RestModel(DictModel):
+    # request can be an OAuthRequest specified to your needs or a plain HTTP request.
+    def __init__(self, name, request):
+        super(RestModel, self).__init__(name)
+        self.r = request
+
+    # We cache data locally.
+    def get(self, id, url):
+        data = super(RestModel, self).get(id)
+        if data is None:
+            data = self._get(id, url)
+            self._set(id, data)
+        return data
+
+    def _get(self, id, url):
+        resp = self.r.get(url + str(id))
+        if resp.status_code != requests.codes.ok:
+            return None
+        return resp.json()
+
+    def post(self, url, data):
+        resp = self.r.post(url, data=data)
+        if resp.status_code != requests.codes.ok:
+            return {}
+        return ret.json()
+
+    def put(self, id, url, data):
+        if data:
+            self.r.put(url + str(id), data=data)
+
+    def delete(self, id, url):
+        self.r.delete(url + str(id))
 
 # More complex models will have new actions. They may also be unrelated to the actual UI
 # and trigger remote actions in some backend.
