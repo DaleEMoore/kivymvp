@@ -1,6 +1,7 @@
 from kivy.app import App
 from kivy.uix.screenmanager import Screen, ScreenManager
 
+
 class Model(object):
     def __init__(self, name):
         self.name = name
@@ -59,24 +60,7 @@ class View(Screen):
 # A View is just a small wrapper around kivy screens; no need for lots of functionality here.
 
 
-class Presenter(object):
-    def __init__(self, ctrl, viewClass, models):
-        self.bus = ctrl.bus
-        self.view = viewClass(self, name=self._name())
-        ctrl.sm.add_widget(self.view)
-        self.models = {}
-        for model in models:
-            self.models[model.name] = model
-            model.presenters.append(self)
-            self.modelEvent(model)
-
-    # provide name here
-    def _name(self):
-        raise Exception("not implemented")
-
-    def emit(self, event):
-        self.bus.emit(event)
-
+class Runnable(object):
     # hook for kivy's on_pause
     def onPause(self):
         pass
@@ -97,6 +81,25 @@ class Presenter(object):
     def receive(self, e):
         pass
 
+
+class Presenter(Runnable):
+    def __init__(self, ctrl, viewClass, models):
+        self.bus = ctrl.bus
+        self.view = viewClass(self, name=self._name())
+        ctrl.sm.add_widget(self.view)
+        self.models = {}
+        for model in models:
+            self.models[model.name] = model
+            model.presenters.append(self)
+            self.modelEvent(model)
+
+    # provide name here
+    def _name(self):
+        raise Exception("not implemented")
+
+    def emit(self, event):
+        self.bus.emit(event)
+
     # associated view notifies us of user event, update model appropriately
     def userEvent(self, e):
         pass
@@ -106,7 +109,7 @@ class Presenter(object):
         pass
 
 
-class AppController(object):
+class AppController(Runnable):
     def __init__(self):
         class EventBus(object):
             def __init__(self):
@@ -145,22 +148,6 @@ class AppController(object):
 
         self.app = KivyMVPApp()
 
-    # hook for kivy's on_pause
-    def onPause(self):
-        pass
-
-    # hook for kivy's on_resume
-    def onResume(self):
-        pass
-
-    # hook for kivy's on_start
-    def onStart(self):
-        pass
-
-    # hook for kivy's on_stop
-    def onStop(self):
-        pass
-
     def current(self):
         return self.sm.current
 
@@ -170,10 +157,6 @@ class AppController(object):
     def go(self, first):
         self.sm.current = first
         self.app.run()
-
-    # listen to events from presenters here, e.g. switch triggers
-    def receive(self, e):
-        pass
 
     def add(self, pres):
         if pres._name() in self.presenters:
