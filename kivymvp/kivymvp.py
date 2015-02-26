@@ -80,7 +80,7 @@ class RestModel(DictModel):
         resp = self.r.post(url, data=data)
         if resp.status_code != requests.codes.ok:
             return {}
-        return ret.json()
+        return resp.json()
 
     def put(self, id, url, data):
         if data:
