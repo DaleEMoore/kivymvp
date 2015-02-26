@@ -39,7 +39,6 @@ class DictModel(Model):
 
 # Persistent JSON Model.
 class JsonModel(Model):
-
     def __init__(self, name, path_prefix='storage/'):
         super(JsonModel, self).__init__(name)
         self.store = JsonStore(path_prefix + name + '.json')
