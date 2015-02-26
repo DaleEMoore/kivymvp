@@ -88,9 +88,6 @@ class RestModel(DictModel):
     def delete(self, id, url):
         self.r.delete(url + str(id))
 
-# More complex models will have new actions. They may also be unrelated to the actual UI
-# and trigger remote actions in some backend.
-
 
 class View(Screen):
     def __init__(self, presenter, **kwargs):
