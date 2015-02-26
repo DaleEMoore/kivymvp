@@ -1,6 +1,7 @@
 from kivy.app import App
 from kivy.uix.screenmanager import Screen, ScreenManager
 
+
 class Model(object):
     def __init__(self, name):
         self.name = name
@@ -59,7 +60,29 @@ class View(Screen):
 # A View is just a small wrapper around kivy screens; no need for lots of functionality here.
 
 
-class Presenter(object):
+class Runnable(object):
+    # hook for kivy's on_pause
+    def onPause(self):
+        pass
+
+    # hook for kivy's on_resume
+    def onResume(self):
+        pass
+
+    # hook for kivy's on_start
+    def onStart(self):
+        pass
+
+    # hook for kivy's on_stop
+    def onStop(self):
+        pass
+
+    # generic event from app controller or other presenter
+    def receive(self, e):
+        pass
+
+
+class Presenter(Runnable):
     def __init__(self, ctrl, viewClass, models):
         self.bus = ctrl.bus
         self.view = viewClass(self, name=self._name())
@@ -77,10 +100,6 @@ class Presenter(object):
     def emit(self, event):
         self.bus.emit(event)
 
-    # generic event from app controller or other presenter
-    def receive(self, e):
-        pass
-
     # associated view notifies us of user event, update model appropriately
     def userEvent(self, e):
         pass
@@ -90,7 +109,7 @@ class Presenter(object):
         pass
 
 
-class AppController(object):
+class AppController(Runnable):
     def __init__(self):
         class EventBus(object):
             def __init__(self):
@@ -102,20 +121,30 @@ class AppController(object):
             def emit(self, event):
                 for listener in self.listeners:
                     listener.receive(event)
+
         self.bus = EventBus()
         self.bus.register(self)
         self.sm = ScreenManager()
         self.presenters = {}
+
+        bus = self.bus
         sm = self.sm
 
-        # TODO: Let's see what we have to expose here.
         class KivyMVPApp(App):
             def build(self):
                 return sm
             def on_pause(self):
-                pass
+                for listener in bus.listeners:
+                    listener.onPause()
             def on_resume(self):
-                pass
+                for listener in bus.listeners:
+                    listener.onResume()
+            def on_start(self):
+                for listener in bus.listeners:
+                    listener.onStart()
+            def on_stop(self):
+                for listener in bus.listeners:
+                    listener.onStop()
 
         self.app = KivyMVPApp()
 
@@ -128,10 +157,6 @@ class AppController(object):
     def go(self, first):
         self.sm.current = first
         self.app.run()
-
-    # listen to events from presenters here, e.g. switch triggers
-    def receive(self, e):
-        pass
 
     def add(self, pres):
         if pres._name() in self.presenters:
