@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name="kivymvp",
-    version="0.1.10",
+    version="0.1.11",
     description="ui framework for kivy following the MVP pattern",
     url="https://github.com/mkraemer67/kivymvp",
     author="Martin Krämer",
