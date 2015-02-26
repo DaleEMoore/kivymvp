@@ -77,6 +77,22 @@ class Presenter(object):
     def emit(self, event):
         self.bus.emit(event)
 
+    # hook for kivy's on_pause
+    def onPause(self):
+        pass
+
+    # hook for kivy's on_resume
+    def onResume(self):
+        pass
+
+    # hook for kivy's on_start
+    def onStart(self):
+        pass
+
+    # hook for kivy's on_stop
+    def onStop(self):
+        pass
+
     # generic event from app controller or other presenter
     def receive(self, e):
         pass
@@ -102,22 +118,48 @@ class AppController(object):
             def emit(self, event):
                 for listener in self.listeners:
                     listener.receive(event)
+
         self.bus = EventBus()
         self.bus.register(self)
         self.sm = ScreenManager()
         self.presenters = {}
+
+        bus = self.bus
         sm = self.sm
 
-        # TODO: Let's see what we have to expose here.
         class KivyMVPApp(App):
             def build(self):
                 return sm
             def on_pause(self):
-                pass
+                for listener in bus.listeners:
+                    listener.onPause()
             def on_resume(self):
-                pass
+                for listener in bus.listeners:
+                    listener.onResume()
+            def on_start(self):
+                for listener in bus.listeners:
+                    listener.onStart()
+            def on_stop(self):
+                for listener in bus.listeners:
+                    listener.onStop()
 
         self.app = KivyMVPApp()
+
+    # hook for kivy's on_pause
+    def onPause(self):
+        pass
+
+    # hook for kivy's on_resume
+    def onResume(self):
+        pass
+
+    # hook for kivy's on_start
+    def onStart(self):
+        pass
+
+    # hook for kivy's on_stop
+    def onStop(self):
+        pass
 
     def current(self):
         return self.sm.current
