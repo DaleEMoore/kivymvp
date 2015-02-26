@@ -4,6 +4,11 @@ ui framework for kivy following the MVP pattern
 ## why use it
 It provides the M and P for Kivy's V. Besides of the architectural benefits of decoupling your code it allows you to easily provide unit tests instead of actual views to allow continuous integration of your frontend models and presenters.
 
+## features
+* lightweight MVP framework
+* transient models: dictionary, REST HTTP
+* persistent models: JSON
+
 ## getting started
 Just look at kivymvp.py for a simple example.
 

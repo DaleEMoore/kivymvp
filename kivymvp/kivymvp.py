@@ -39,7 +39,6 @@ class DictModel(Model):
 
 # Persistent JSON Model.
 class JsonModel(Model):
-
     def __init__(self, name, path_prefix='storage/'):
         super(JsonModel, self).__init__(name)
         self.store = JsonStore(path_prefix + name + '.json')
@@ -88,9 +87,6 @@ class RestModel(DictModel):
 
     def delete(self, id, url):
         self.r.delete(url + str(id))
-
-# More complex models will have new actions. They may also be unrelated to the actual UI
-# and trigger remote actions in some backend.
 
 
 class View(Screen):
