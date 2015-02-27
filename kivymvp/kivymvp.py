@@ -66,7 +66,7 @@ class RestModel(DictModel):
         data = super(RestModel, self).get(id)
         if data is None:
             data = self._get(id, url)
-            self._set(id, data)
+            self.set(id, data)
         return data
 
     def _get(self, id, url):
