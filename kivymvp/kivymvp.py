@@ -61,12 +61,9 @@ class RestModel(DictModel):
         super(RestModel, self).__init__(name)
         self.r = request
 
-    # We cache data locally.
     def get(self, id, url):
-        data = super(RestModel, self).get(id)
-        if data is None:
-            data = self._get(id, url)
-            self.set(id, data)
+        data = self._get(id, url)
+        self.set(id, data)
         return data
 
     def _get(self, id, url):
