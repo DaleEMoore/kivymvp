@@ -66,7 +66,7 @@ class RestModel(DictModel):
         data = super(RestModel, self).get(id)
         if data is None:
             data = self._get(id, url)
-            self.set(id, data)
+            self._set(id, data)
         return data
 
     def _get(self, id, url):
@@ -111,19 +111,19 @@ class View(Screen):
 class Runnable(object):
     # hook for kivy's on_pause
     def onPause(self):
-        pass
+        return True
 
     # hook for kivy's on_resume
     def onResume(self):
-        pass
+        return True
 
     # hook for kivy's on_start
     def onStart(self):
-        pass
+        return True
 
     # hook for kivy's on_stop
     def onStop(self):
-        pass
+        return True
 
     # generic event from app controller or other presenter
     def receive(self, e):
@@ -183,16 +183,20 @@ class AppController(Runnable):
                 return sm
             def on_pause(self):
                 for listener in bus.listeners:
-                    listener.onPause()
+                    return False if not listener.onPause()
+                return True
             def on_resume(self):
                 for listener in bus.listeners:
-                    listener.onResume()
+                    return False if not listener.onResume()
+                return True
             def on_start(self):
                 for listener in bus.listeners:
-                    listener.onStart()
+                    return False if not listener.onStart()
+                return True
             def on_stop(self):
                 for listener in bus.listeners:
-                    listener.onStop()
+                    return False if not listener.onStop()
+                return True
 
         self.app = KivyMVPApp()
 
