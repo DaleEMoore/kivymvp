@@ -183,7 +183,8 @@ class AppController(Runnable):
                 return sm
             def on_pause(self):
                 for listener in bus.listeners:
-                    return False if not listener.onPause()
+                    if not listener.onPause():
+                        return False
                 return True
             def on_resume(self):
                 for listener in bus.listeners:
