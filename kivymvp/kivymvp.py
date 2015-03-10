@@ -111,7 +111,7 @@ class View(Screen):
 class Runnable(object):
     # hook for kivy's on_pause
     def onPause(self):
-        pass
+        return True
 
     # hook for kivy's on_resume
     def onResume(self):
@@ -183,7 +183,8 @@ class AppController(Runnable):
                 return sm
             def on_pause(self):
                 for listener in bus.listeners:
-                    listener.onPause()
+                    return False if not listener.onPause()
+                return True
             def on_resume(self):
                 for listener in bus.listeners:
                     listener.onResume()
