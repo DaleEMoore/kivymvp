@@ -115,15 +115,15 @@ class Runnable(object):
 
     # hook for kivy's on_resume
     def onResume(self):
-        return True
+        pass
 
     # hook for kivy's on_start
     def onStart(self):
-        return True
+        pass
 
     # hook for kivy's on_stop
     def onStop(self):
-        return True
+        pass
 
     # generic event from app controller or other presenter
     def receive(self, e):
@@ -187,16 +187,13 @@ class AppController(Runnable):
                 return True
             def on_resume(self):
                 for listener in bus.listeners:
-                    return False if not listener.onResume()
-                return True
+                    listener.onResume()
             def on_start(self):
                 for listener in bus.listeners:
-                    return False if not listener.onStart()
-                return True
+                    listener.onStart()
             def on_stop(self):
                 for listener in bus.listeners:
-                    return False if not listener.onStop()
-                return True
+                    listener.onStop()
 
         self.app = KivyMVPApp()
 
