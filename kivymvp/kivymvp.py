@@ -1,4 +1,5 @@
 from kivy.app import App
+from kivy.base import EventLoop
 from kivy.uix.screenmanager import Screen, ScreenManager
 from kivy.storage.jsonstore import JsonStore
 
@@ -174,6 +175,7 @@ class AppController(Runnable):
         self.bus.register(self)
         self.sm = ScreenManager()
         self.presenters = {}
+        self.key_hooks = {}
 
         bus = self.bus
         sm = self.sm
@@ -190,13 +192,21 @@ class AppController(Runnable):
                 for listener in bus.listeners:
                     listener.onResume()
             def on_start(self):
+                EventLoop.window.bind(on_keyboard=self.hook_keyboard)
                 for listener in bus.listeners:
                     listener.onStart()
             def on_stop(self):
                 for listener in bus.listeners:
                     listener.onStop()
+            def hook_keyboard(self, window, key, *largs):
+                if key in self.key_hooks:
+                    return self.key_hooks[key]()
+                return True
 
         self.app = KivyMVPApp()
+
+    def hook_key(self, key, func):
+        self.key_hooks[key] = func
 
     def current(self):
         return self.sm.current
