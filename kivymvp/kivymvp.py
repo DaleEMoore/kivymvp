@@ -179,6 +179,7 @@ class AppController(Runnable):
 
         bus = self.bus
         sm = self.sm
+        key_hooks = self.key_hooks
 
         class KivyMVPApp(App):
             def build(self):
@@ -199,8 +200,8 @@ class AppController(Runnable):
                 for listener in bus.listeners:
                     listener.onStop()
             def hook_keyboard(self, window, key, *largs):
-                if key in self.key_hooks:
-                    return self.key_hooks[key]()
+                if key in key_hooks:
+                    return key_hooks[key]()
                 return True
 
         self.app = KivyMVPApp()
