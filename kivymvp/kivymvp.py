@@ -3,7 +3,6 @@ from kivy.base import EventLoop
 from kivy.uix.screenmanager import Screen, ScreenManager
 from kivy.storage.jsonstore import JsonStore
 
-import requests
 
 class Model(object):
     def __init__(self, name):
@@ -21,7 +20,7 @@ class Model(object):
     def set(self, id, data):
         self._set(id, data)
         for p in self.presenters:
-            p.modelEvent(self, id)
+            p.modelEvent(self, ("set", data))
 
 # Transient Dict Model.
 class DictModel(Model):
@@ -58,36 +57,34 @@ class JsonModel(Model):
 # Transient Rest HTTP Model.
 class RestModel(DictModel):
     # request can be an OAuthRequest specified to your needs or a plain HTTP request.
-    def __init__(self, name, request):
+    def __init__(self, name, request, id_key="id"):
         super(RestModel, self).__init__(name)
         self.r = request
-
-    # We cache data locally.
-    def get(self, id, url):
+        self.id_key = id_key
+        
+    def get(self, id, url, on_success=None, **kwargs):
+        on_success = on_success or self._get
         data = super(RestModel, self).get(id)
-        if data is None:
-            data = self._get(id, url)
-            self.set(id, data)
-        return data
-
-    def _get(self, id, url):
-        resp = self.r.get(url + str(id))
-        if resp.status_code != requests.codes.ok:
-            return None
-        return resp.json()
-
-    def post(self, url, data):
-        resp = self.r.post(url, data=data)
-        if resp.status_code != requests.codes.ok:
-            return {}
-        return resp.json()
-
-    def put(self, id, url, data):
         if data:
-            self.r.put(url + str(id), data=data)
+            for p in self.presenters:
+                p.modelEvent(self, ("get", data))
+        else:
+            self.r.request(url + str(id), method="GET", on_success=on_success, **kwargs)
+    
+    def _get(self, req, data):
+        self.set(self.id_key, data)
+        for p in self.presenters:
+            p.modelEvent(self, ("get", data))
+ 
+    def post(self, url, data, **kwargs):
+        self.r.request(url, req_body=data, method="POST", **kwargs)
 
-    def delete(self, id, url):
-        self.r.delete(url + str(id))
+    def put(self, id, url, data, **kwargs):
+        if data:
+            self.r.request(url + str(id), req_body=data, method="PUT", **kwargs)
+
+    def delete(self, id, url, **kwargs):
+        self.r.request(url + str(id), method="DELETE", **kwargs)
 
 
 class View(Screen):
