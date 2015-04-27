@@ -41,7 +41,10 @@ class DictModel(Model):
 class JsonModel(Model):
     def __init__(self, name, path_prefix='storage/'):
         super(JsonModel, self).__init__(name)
-        self.store = JsonStore(path_prefix + name + '.json')
+        try:
+            self.store = JsonStore(path_prefix + name + '.json')
+        except Exception:
+            pass
 
     def get(self, id):
         if self.store.exists(id):
@@ -56,10 +59,10 @@ class JsonModel(Model):
 
 # Transient Rest HTTP Model.
 class RestModel(DictModel):
-    # request can be an OAuthRequest specified to your needs or a plain HTTP request.
-    def __init__(self, name, request, id_key="id"):
+    # request can be an OAuthRequest specified to your needs or UrlRequest from kivy.network.urlrequest.
+    def __init__(self, name, Request, id_key="id"):
         super(RestModel, self).__init__(name)
-        self.r = request
+        self.Request = Request
         self.id_key = id_key
         
     def get(self, id, url, on_success=None, **kwargs):
@@ -69,7 +72,7 @@ class RestModel(DictModel):
             for p in self.presenters:
                 p.modelEvent(self, ("get", data))
         else:
-            self.r.request(url + str(id), method="GET", on_success=on_success, **kwargs)
+            self.Request(url + str(id), method="GET", on_success=on_success, **kwargs)
     
     def _get(self, req, data):
         self.set(self.id_key, data)
@@ -77,14 +80,14 @@ class RestModel(DictModel):
             p.modelEvent(self, ("get", data))
  
     def post(self, url, data, **kwargs):
-        self.r.request(url, req_body=data, method="POST", **kwargs)
+        self.Request(url, req_body=data, method="POST", **kwargs)
 
     def put(self, id, url, data, **kwargs):
         if data:
-            self.r.request(url + str(id), req_body=data, method="PUT", **kwargs)
+            self.Request(url + str(id), req_body=data, method="PUT", **kwargs)
 
     def delete(self, id, url, **kwargs):
-        self.r.request(url + str(id), method="DELETE", **kwargs)
+        self.Request(url + str(id), method="DELETE", **kwargs)
 
 
 class View(Screen):
