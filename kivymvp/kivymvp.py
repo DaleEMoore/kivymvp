@@ -44,7 +44,7 @@ class JsonModel(Model):
         try:
             self.store = JsonStore(path_prefix + name + '.json')
         except Exception:
-            pass
+            print Exception
 
     def get(self, id):
         if self.store.exists(id):
