@@ -32,23 +32,6 @@ class Model(object):
             p.modelEvent(self, ("set", id, data))
 
 
-# Persistent JSON Model.
-class JsonModel(Model):
-    def __init__(self, name, path_prefix='storage/'):
-        super(JsonModel, self).__init__(name)
-        self.store = JsonStore(path_prefix + name + '.json')
-
-    def get(self, id):
-        if self.store.exists(id):
-            return self.store[id]
-        return None
-
-    def _set(self, id, data):
-        if not data:
-            self.store.delete(id)
-        else:
-            self.store[id] = data
-
 # Transient Rest HTTP Model.
 class RestModel(Model):
     # Request can be UrlRequest from kivy.network.urlrequest or UrlRequest specified to your needs.
