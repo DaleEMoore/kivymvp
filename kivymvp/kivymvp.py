@@ -8,43 +8,35 @@ class Model(object):
     def __init__(self, name):
         self.name = name
         self.presenters = []
+        self.data = {}
 
     # return data for id here
     def get(self, id):
-        raise Exception("not implemented")
+        if id in self.data:
+            self._get(id, self.data[id])
+            return True
+        else:
+            return False
+
+    def _get(self, id, data):
+        for p in self.presenters:
+            p.modelEvent(self, ("get", id, data))
 
     # set data for id here
     def _set(self, id, data):
-        raise Exception("not implemented")
+        self.data[id] = data
 
     def set(self, id, data):
         self._set(id, data)
         for p in self.presenters:
-            p.modelEvent(self, ("set", data))
+            p.modelEvent(self, ("set", id, data))
 
-# Transient Dict Model.
-class DictModel(Model):
-    def __init__(self, name):
-        super(DictModel, self).__init__(name)
-        self.data = {}
-
-    def get(self, id):
-        if id in self.data.keys():
-            return self.data[id]
-        else:
-            return None
-
-    def _set(self, id, data):
-        self.data[id] = data
 
 # Persistent JSON Model.
 class JsonModel(Model):
     def __init__(self, name, path_prefix='storage/'):
         super(JsonModel, self).__init__(name)
-        try:
-            self.store = JsonStore(path_prefix + name + '.json')
-        except Exception:
-            print Exception
+        self.store = JsonStore(path_prefix + name + '.json')
 
     def get(self, id):
         if self.store.exists(id):
@@ -58,27 +50,23 @@ class JsonModel(Model):
             self.store[id] = data
 
 # Transient Rest HTTP Model.
-class RestModel(DictModel):
-    # request can be an OAuthRequest specified to your needs or UrlRequest from kivy.network.urlrequest.
-    def __init__(self, name, Request, id_key="id"):
+class RestModel(Model):
+    # Request can be UrlRequest from kivy.network.urlrequest or UrlRequest specified to your needs.
+    def __init__(self, name, Request):
         super(RestModel, self).__init__(name)
         self.Request = Request
-        self.id_key = id_key
         
     def get(self, id, url, on_success=None, **kwargs):
-        on_success = on_success or self._get
-        data = super(RestModel, self).get(id)
-        if data:
-            for p in self.presenters:
-                p.modelEvent(self, ("get", data))
-        else:
-            self.Request(url + str(id), method="GET", on_success=on_success, **kwargs)
+        def getset(req, data):
+            # on_success can be used to manipulate the raw data and req.
+            if on_success:
+                req,data = on_success(req, data)
+            self.set(id, data)
+            self._get(id, data)
+        inModel = super(RestModel, self).get(id)
+        if not inModel:
+            self.Request(url + str(id), method="GET", on_success=getset, **kwargs)
     
-    def _get(self, req, data):
-        self.set(self.id_key, data)
-        for p in self.presenters:
-            p.modelEvent(self, ("get", data))
- 
     def post(self, url, data, **kwargs):
         self.Request(url, req_body=data, method="POST", **kwargs)
 
@@ -245,7 +233,7 @@ if __name__ == '__main__':
     ctrl = TestAppController()
 
     # Our model is a simple dictionary containing a single integer at key 0.
-    model = DictModel("aSingleNumber")
+    model = Model("aSingleNumber")
     model.set(0, 0)
 
     # This is a very basic example. Of course we should not duplicate code
@@ -261,6 +249,10 @@ if __name__ == '__main__':
     # On receiving any event from the model it simply retrieves the currently stored
     # number and instructs the view to update based on it.
     class BlackPresenter(Presenter):
+        def __init__(self, ctrl, viewClass, models):
+            super(BlackPresenter, self).__init__(ctrl, viewClass, models)
+            self.models["aSingleNumber"].get(0)
+
         def _name(self):
             return "black"
 
@@ -268,11 +260,14 @@ if __name__ == '__main__':
             if e == "done":
                 self.emit("switch")
             elif e == "add":
-                x = self.models["aSingleNumber"].get(0)
-                self.models["aSingleNumber"].set(0, x+1)
+                self.models["aSingleNumber"].set(0, self.number+1)
 
         def modelEvent(self, m, e=None):
-            self.view.update(str(m.get(0)))
+            if e == None:
+                return
+            method, id_, data = e
+            self.number = data
+            self.view.update(str(data))
 
     # The white presenter listens for two user events.
     # If it receives "done" it signals "switch" to the app controller's event bus.
@@ -281,6 +276,10 @@ if __name__ == '__main__':
     # On receiving any event from the model it simply retrieves the currently stored
     # number and instructs the view to update based on it.
     class WhitePresenter(Presenter):
+        def __init__(self, ctrl, viewClass, models):
+            super(WhitePresenter, self).__init__(ctrl, viewClass, models)
+            self.models["aSingleNumber"].get(0)
+
         def _name(self):
             return "white"
 
@@ -288,11 +287,14 @@ if __name__ == '__main__':
             if e == "done":
                 self.emit("switch")
             elif e == "subtract":
-                x = self.models["aSingleNumber"].get(0)
-                self.models["aSingleNumber"].set(0, x-1)
+                self.models["aSingleNumber"].set(0, self.number-1)
 
         def modelEvent(self, m, e=None):
-            self.view.update(str(m.get(0)))
+            if e == None:
+                return
+            method, id_, data = e
+            self.number = data
+            self.view.update(str(data))
 
     # This is just a simple layout with a background color such that we can easily
     # distinguish our two views.
