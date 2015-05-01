@@ -55,11 +55,11 @@ class RestModel(Model):
     
     def post(self, url, data):
         def on_s(req, data):
-            self.event("post", data)
+            self.event("post", None, data)
         def on_f(req, data):
-            self.event("post-failure", data)
+            self.event("post-failure", None, data)
         def on_e(req, data):
-            self.event("post-error", data)
+            self.event("post-error", None, data)
         self.Request(url, req_body=data, method="POST", on_success=on_s, on_failure=on_f, on_error=on_e)
 
     def put(self, id, url, data):
@@ -76,7 +76,7 @@ class RestModel(Model):
         def on_s(req, data):
             self.event("delete", id, data)
         def on_f(req, data):
-            self.event("delete-failure", id. data)
+            self.event("delete-failure", id, data)
         def on_e(req, data):
             self.event("delete-error", id, data)
         self.Request(url + str(id), method="DELETE", on_success=on_s, on_failure=on_f, on_error=on_e)
