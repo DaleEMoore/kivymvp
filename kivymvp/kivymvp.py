@@ -19,8 +19,7 @@ class Model(object):
             return False
 
     def _get(self, id, data):
-        for p in self.presenters:
-            p.modelEvent(self, ("get", id, data))
+        self.event("get", id, data)
 
     # set data for id here
     def _set(self, id, data):
@@ -28,8 +27,11 @@ class Model(object):
 
     def set(self, id, data):
         self._set(id, data)
+        self.event("set", id, data)
+
+    def event(self, method, id, data):
         for p in self.presenters:
-            p.modelEvent(self, ("set", id, data))
+            p.modelEvent(self, (method, id, data))
 
 
 # Transient Rest HTTP Model.
@@ -39,26 +41,45 @@ class RestModel(Model):
         super(RestModel, self).__init__(name)
         self.Request = Request
         
-    def get(self, id, url, on_success=None, **kwargs):
-        def getset(req, data):
-            # on_success can be used to manipulate the raw data and req.
-            if on_success:
-                req,data = on_success(req, data)
+    def get(self, id, url):
+        def on_s(req, data):
             self.set(id, data)
             self._get(id, data)
+        def on_f(req, data):
+            self.event("get-failure", id, data)
+        def on_e(req, data):
+            self.event("get-error", id, data)
         inModel = super(RestModel, self).get(id)
         if not inModel:
-            self.Request(url + str(id), method="GET", on_success=getset, **kwargs)
+            self.Request(url + str(id), method="GET", on_success=on_s, on_failure=on_f, on_error=on_e)
     
-    def post(self, url, data, **kwargs):
-        self.Request(url, req_body=data, method="POST", **kwargs)
+    def post(self, url, data):
+        def on_s(req, data):
+            self.event("post", data)
+        def on_f(req, data):
+            self.event("post-failure", data)
+        def on_e(req, data):
+            self.event("post-error", data)
+        self.Request(url, req_body=data, method="POST", on_success=on_s, on_failure=on_f, on_error=on_e)
 
-    def put(self, id, url, data, **kwargs):
+    def put(self, id, url, data):
+        def on_s(req, data):
+            self.event("put", id, data)
+        def on_f(req, data):
+            self.event("put-failure", id, data)
+        def on_e(req, data):
+            self.event("put-error", id, data)
         if data:
-            self.Request(url + str(id), req_body=data, method="PUT", **kwargs)
+            self.Request(url + str(id), req_body=data, method="PUT", on_success=on_s, on_failure=on_f, on_error=on_e)
 
-    def delete(self, id, url, **kwargs):
-        self.Request(url + str(id), method="DELETE", **kwargs)
+    def delete(self, id, url):
+        def on_s(req, data):
+            self.event("delete", id, data)
+        def on_f(req, data):
+            self.event("delete-failure", id. data)
+        def on_e(req, data):
+            self.event("delete-error", id, data)
+        self.Request(url + str(id), method="DELETE", on_success=on_s, on_failure=on_f, on_error=on_e)
 
 
 class View(Screen):
