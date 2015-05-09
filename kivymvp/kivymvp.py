@@ -1,7 +1,6 @@
 from kivy.app import App
 from kivy.base import EventLoop
 from kivy.uix.screenmanager import Screen, ScreenManager
-from kivy.storage.jsonstore import JsonStore
 
 
 class Model(object):
@@ -42,7 +41,9 @@ class RestModel(Model):
         self.Request = Request
         
     def get(self, id, url):
-        def on_s(req, data):
+        def on_s(req, data, postproc=None):
+            if postproc:
+                data = postproc(id, data)
             self.set(id, data)
             self._get(id, data)
         def on_f(req, data):
@@ -54,16 +55,20 @@ class RestModel(Model):
             self.Request(url + str(id), method="GET", on_success=on_s, on_failure=on_f, on_error=on_e)
     
     def post(self, url, data):
-        def on_s(req, data):
+        def on_s(req, data, postproc=None):
+            if postproc:
+                data = postproc(data)
             self.event("post", None, data)
         def on_f(req, data):
             self.event("post-failure", None, data)
         def on_e(req, data):
             self.event("post-error", None, data)
-        self.Request(url, req_body=data, method="POST", on_success=on_s, on_failure=on_f, on_error=on_e)
+        req = self.Request(url, req_body=data, method="POST", on_success=on_s, on_failure=on_f, on_error=on_e)
 
     def put(self, id, url, data):
-        def on_s(req, data):
+        def on_s(req, data, postproc=None):
+            if postproc:
+                data = postproc(id, data)
             self.event("put", id, data)
         def on_f(req, data):
             self.event("put-failure", id, data)
@@ -73,7 +78,9 @@ class RestModel(Model):
             self.Request(url + str(id), req_body=data, method="PUT", on_success=on_s, on_failure=on_f, on_error=on_e)
 
     def delete(self, id, url):
-        def on_s(req, data):
+        def on_s(req, data, postproc=None):
+            if postproc:
+                data = postproc(id, data)
             self.event("delete", id, data)
         def on_f(req, data):
             self.event("delete-failure", id, data)
@@ -129,6 +136,7 @@ class Presenter(Runnable):
         self.view = viewClass(self, name=self._name())
         ctrl.sm.add_widget(self.view)
         self.models = {}
+        print models
         for model in models:
             self.models[model.name] = model
             model.presenters.append(self)
