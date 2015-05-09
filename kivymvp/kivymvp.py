@@ -63,7 +63,7 @@ class RestModel(Model):
             self.event("post-failure", None, data)
         def on_e(req, data):
             self.event("post-error", None, data)
-        req = self.Request(url, req_body=data, method="POST", on_success=on_s, on_failure=on_f, on_error=on_e)
+        self.Request(url, req_body=data, method="POST", on_success=on_s, on_failure=on_f, on_error=on_e)
 
     def put(self, id, url, data):
         def on_s(req, data, postproc=None):
