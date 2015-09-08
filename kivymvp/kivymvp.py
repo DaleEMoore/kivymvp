@@ -18,7 +18,7 @@ class Model(object):
             return False
 
     def _get(self, id, data):
-        self.event("get", id, data)
+        self._notifyPresenters("get", id, data)
 
     # set data for id here
     def _set(self, id, data):
@@ -26,9 +26,9 @@ class Model(object):
 
     def set(self, id, data):
         self._set(id, data)
-        self.event("set", id, data)
+        self._notifyPresenters("set", id, data)
 
-    def event(self, method, id, data):
+    def _notifyPresenters(self, method, id, data):
         for p in self.presenters:
             p.modelEvent(self, (method, id, data))
 
@@ -41,52 +41,56 @@ class RestModel(Model):
         self.Request = Request
         
     def get(self, id, url):
-        def on_s(req, data, postproc=None):
+        def on_success(req, data, postproc=None):
             if postproc:
                 data = postproc(id, data)
             self.set(id, data)
             self._get(id, data)
-        def on_f(req, data):
-            self.event("get-failure", id, data)
-        def on_e(req, data):
-            self.event("get-error", id, data)
+        def on_failure(req, data):
+            self._notifyPresenters("get-failure", id, data)
+        def on_error(req, data):
+            self._notifyPresenters("get-error", id, data)
         inModel = super(RestModel, self).get(id)
         if not inModel:
-            self.Request(url + str(id), method="GET", on_success=on_s, on_failure=on_f, on_error=on_e)
+            self.Request(url + str(id), method="GET", on_success=on_success,
+                on_failure=on_failure, on_error=on_error)
     
     def post(self, url, data):
-        def on_s(req, data, postproc=None):
+        def on_success(req, data, postproc=None):
             if postproc:
                 data = postproc(data)
-            self.event("post", None, data)
-        def on_f(req, data):
-            self.event("post-failure", None, data)
-        def on_e(req, data):
-            self.event("post-error", None, data)
-        self.Request(url, req_body=data, method="POST", on_success=on_s, on_failure=on_f, on_error=on_e)
+            self._notifyPresenters("post", None, data)
+        def on_failure(req, data):
+            self._notifyPresenters("post-failure", None, data)
+        def on_error(req, data):
+            self._notifyPresenters("post-error", None, data)
+        req = self.Request(url, req_body=data, method="POST",
+            on_success=on_success, on_failure=on_failure, on_error=on_error)
 
     def put(self, id, url, data):
-        def on_s(req, data, postproc=None):
+        def on_success(req, data, postproc=None):
             if postproc:
                 data = postproc(id, data)
-            self.event("put", id, data)
-        def on_f(req, data):
-            self.event("put-failure", id, data)
-        def on_e(req, data):
-            self.event("put-error", id, data)
+            self._notifyPresenters("put", id, data)
+        def on_failure(req, data):
+            self._notifyPresenters("put-failure", id, data)
+        def on_error(req, data):
+            self._notifyPresenters("put-error", id, data)
         if data:
-            self.Request(url + str(id), req_body=data, method="PUT", on_success=on_s, on_failure=on_f, on_error=on_e)
+            self.Request(url + str(id), req_body=data, method="PUT",
+                on_success=on_success, on_failure=on_failure, on_error=on_error)
 
     def delete(self, id, url):
-        def on_s(req, data, postproc=None):
+        def on_success(req, data, postproc=None):
             if postproc:
                 data = postproc(id, data)
-            self.event("delete", id, data)
-        def on_f(req, data):
-            self.event("delete-failure", id, data)
-        def on_e(req, data):
-            self.event("delete-error", id, data)
-        self.Request(url + str(id), method="DELETE", on_success=on_s, on_failure=on_f, on_error=on_e)
+            self._notifyPresenters("delete", id, data)
+        def on_failure(req, data):
+            self._notifyPresenters("delete-failure", id, data)
+        def on_error(req, data):
+            self._notifyPresenters("delete-error", id, data)
+        self.Request(url + str(id), method="DELETE", on_success=on_success,
+            on_failure=on_failure, on_error=on_error)
 
 
 class View(Screen):
@@ -136,7 +140,6 @@ class Presenter(Runnable):
         self.view = viewClass(self, name=self._name())
         ctrl.sm.add_widget(self.view)
         self.models = {}
-        print models
         for model in models:
             self.models[model.name] = model
             model.presenters.append(self)
