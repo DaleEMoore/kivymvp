@@ -15,12 +15,12 @@ class Model(object):
             self._get(id, self.data[id], callback, **cb_kwargs)
             return True
         else:
-            callback(id, None)
+            callback(None)
             return False
 
     def _get(self, id, data, callback, **cb_kwargs):
         if callback:
-            callback(id, data, **cb_kwargs)
+            callback((id, data), **cb_kwargs)
 
     # set data for id here
     def _set(self, id, data):
