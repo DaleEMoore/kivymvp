@@ -10,15 +10,17 @@ class Model(object):
         self.data = {}
 
     # return data for id here
-    def get(self, id):
+    def get(self, id, callback=None, **cb_kwargs):
         if id in self.data:
-            self._get(id, self.data[id])
+            self._get(id, self.data[id], callback, **cb_kwargs)
             return True
         else:
+            callback(id, None)
             return False
 
-    def _get(self, id, data):
-        self._notifyPresenters("get", id, data)
+    def _get(self, id, data, callback, **cb_kwargs):
+        if callback:
+            callback(id, data, **cb_kwargs)
 
     # set data for id here
     def _set(self, id, data):
@@ -40,25 +42,21 @@ class RestModel(Model):
         super(RestModel, self).__init__(name)
         self.Request = Request
         
-    def get(self, id, url):
-        def on_success(req, data, postproc=None):
-            if postproc:
-                data = postproc(id, data)
+    def get(self, id, url, callback=None, **cb_kwargs):
+        def on_success(req, data):
             self.set(id, data)
-            self._get(id, data)
+            self._get(id, data, callback, **cb_kwargs)
         def on_failure(req, data):
             self._notifyPresenters("get-failure", id, data)
         def on_error(req, data):
             self._notifyPresenters("get-error", id, data)
-        inModel = super(RestModel, self).get(id)
+        inModel = super(RestModel, self).get(id, callback, **cb_kwargs)
         if not inModel:
             self.Request(url + str(id), method="GET", on_success=on_success,
                 on_failure=on_failure, on_error=on_error)
     
     def post(self, url, data):
-        def on_success(req, data, postproc=None):
-            if postproc:
-                data = postproc(data)
+        def on_success(req, data):
             self._notifyPresenters("post", None, data)
         def on_failure(req, data):
             self._notifyPresenters("post-failure", None, data)
@@ -67,11 +65,11 @@ class RestModel(Model):
         req = self.Request(url, req_body=data, method="POST",
             on_success=on_success, on_failure=on_failure, on_error=on_error)
 
-    def put(self, id, url, data):
-        def on_success(req, data, postproc=None):
-            if postproc:
-                data = postproc(id, data)
+    def put(self, id, url, data, callback=None, **cb_kwargs):
+        def on_success(req, data):
             self._notifyPresenters("put", id, data)
+            if callback:
+                callback(id, data, **cb_kwargs)
         def on_failure(req, data):
             self._notifyPresenters("put-failure", id, data)
         def on_error(req, data):
@@ -80,11 +78,11 @@ class RestModel(Model):
             self.Request(url + str(id), req_body=data, method="PUT",
                 on_success=on_success, on_failure=on_failure, on_error=on_error)
 
-    def delete(self, id, url):
-        def on_success(req, data, postproc=None):
-            if postproc:
-                data = postproc(id, data)
+    def delete(self, id, url, callback=None, **cb_kwargs):
+        def on_success(req, data):
             self._notifyPresenters("delete", id, data)
+            if callback:
+                callback(id, data, **cb_kwargs)
         def on_failure(req, data):
             self._notifyPresenters("delete-failure", id, data)
         def on_error(req, data):
@@ -258,15 +256,15 @@ if __name__ == '__main__':
     # The black presenter listens for two user events.
     # If it receives "done" it signals "switch" to the app controller's event bus.
     # (Note: all presenters and the app controller are registered at the event bus
-    #  and can response to events if required)
+    # and can response to events if required)
     # If it receives an "add" event it retrieves the current number from the model,
     # increments by one and puts it back into the model.
     # On receiving any event from the model it simply retrieves the currently stored
     # number and instructs the view to update based on it.
     class BlackPresenter(Presenter):
-        def __init__(self, ctrl, viewClass, models):
-            super(BlackPresenter, self).__init__(ctrl, viewClass, models)
-            self.models["aSingleNumber"].get(0)
+        #def __init__(self, ctrl, viewClass, models):
+        #    super(BlackPresenter, self).__init__(ctrl, viewClass, models)
+        #    self.models["aSingleNumber"].get(0)
 
         def _name(self):
             return "black"
@@ -275,13 +273,17 @@ if __name__ == '__main__':
             if e == "done":
                 self.emit("switch")
             elif e == "add":
-                self.models["aSingleNumber"].set(0, self.number+1)
+                self.models["aSingleNumber"].get(0, self.add)
 
+        def add(self, response):
+            if response:
+                (id, data) = response
+                self.models["aSingleNumber"].set(id, data+1)
+            
         def modelEvent(self, m, e=None):
             if e == None:
                 return
-            method, id_, data = e
-            self.number = data
+            method, id, data = e
             self.view.update(str(data))
 
     # The white presenter listens for two user events.
@@ -291,9 +293,9 @@ if __name__ == '__main__':
     # On receiving any event from the model it simply retrieves the currently stored
     # number and instructs the view to update based on it.
     class WhitePresenter(Presenter):
-        def __init__(self, ctrl, viewClass, models):
-            super(WhitePresenter, self).__init__(ctrl, viewClass, models)
-            self.models["aSingleNumber"].get(0)
+        #def __init__(self, ctrl, viewClass, models):
+        #    super(WhitePresenter, self).__init__(ctrl, viewClass, models)
+        #    self.models["aSingleNumber"].get(0)
 
         def _name(self):
             return "white"
@@ -302,13 +304,17 @@ if __name__ == '__main__':
             if e == "done":
                 self.emit("switch")
             elif e == "subtract":
-                self.models["aSingleNumber"].set(0, self.number-1)
+                self.models["aSingleNumber"].get(0, self.subtract)
+                
+        def subtract(self, response):
+            if response:
+                (id, data) = response
+                self.models["aSingleNumber"].set(id, data-1)
 
         def modelEvent(self, m, e=None):
             if e == None:
                 return
-            method, id_, data = e
-            self.number = data
+            method, id, data = e
             self.view.update(str(data))
 
     # This is just a simple layout with a background color such that we can easily
