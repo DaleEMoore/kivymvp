@@ -262,10 +262,6 @@ if __name__ == '__main__':
     # On receiving any event from the model it simply retrieves the currently stored
     # number and instructs the view to update based on it.
     class BlackPresenter(Presenter):
-        #def __init__(self, ctrl, viewClass, models):
-        #    super(BlackPresenter, self).__init__(ctrl, viewClass, models)
-        #    self.models["aSingleNumber"].get(0)
-
         def _name(self):
             return "black"
 
@@ -293,10 +289,6 @@ if __name__ == '__main__':
     # On receiving any event from the model it simply retrieves the currently stored
     # number and instructs the view to update based on it.
     class WhitePresenter(Presenter):
-        #def __init__(self, ctrl, viewClass, models):
-        #    super(WhitePresenter, self).__init__(ctrl, viewClass, models)
-        #    self.models["aSingleNumber"].get(0)
-
         def _name(self):
             return "white"
 
