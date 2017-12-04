@@ -8,6 +8,12 @@ Overview
 
 
 TODO
+Can I use kivymvp.py to further my quest for kivy data entry for intrep?
+    It appears that kivymvp shows how to use Object Orriented programming and the kivy data model to access and process
+    kivy data entry.
+
+    So it could be TREMENDOUSLY helpful.
+
 Figure out how to MVC (or MVP) for kivy and CRUD projects.
 
 Run kivymvp/kivymvp.py doesn't give me much along the lines of MVP; or does it?
