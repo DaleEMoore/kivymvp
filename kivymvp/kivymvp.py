@@ -349,8 +349,7 @@ if __name__ == '__main__':
             self.l.text = data
 
     # The white view has a button "add" and a button "to_black" on a white background.
-    # Pressing "add" triggers emits the event "add" and pressing "to black" triggers "done".
-    # When it receives an update event it updates the label text with the new data.
+    # Pressing "add" triggers emits  the event "add" and pressing "to black" triggers "done".
     class WhiteView(View):
         def __init__(self, presenter, **kwargs):
             super(WhiteView, self).__init__(presenter, **kwargs)

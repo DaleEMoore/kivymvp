@@ -8,6 +8,18 @@ Overview
 
 
 TODO
+Create a new kivymvpSQL.py from kivymvp.py
+    Copy kivymvp.py kivymvpSQL.py (or do it in a new kivymvpSQL folder?)
+    If DB doesn't exist
+        create db
+    Display any kivy record
+        allow add a record if no records
+        or display the record in a kivy form
+        add/change/delete the kivy form record
+        apply data to the DB
+    report the kivy record(s)
+    exit
+
 Can I use kivymvp.py to further my quest for kivy data entry for intrep?
     It appears that kivymvp shows how to use Object Orriented programming and the kivy data model to access and process
     kivy data entry.
