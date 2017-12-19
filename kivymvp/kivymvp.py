@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from kivy.app import App
 from kivy.base import EventLoop
 from kivy.uix.screenmanager import Screen, ScreenManager
@@ -5,12 +7,14 @@ from kivy.uix.screenmanager import Screen, ScreenManager
 
 class Model(object):
     def __init__(self, name):
+        print("Model.__init__()")
         self.name = name
         self.presenters = []
         self.data = {}
 
     # return data for id here
     def get(self, id, callback=None, **cb_kwargs):
+        print("Model.get()")
         if id in self.data:
             self._get(id, self.data[id], callback, **cb_kwargs)
             return True
@@ -19,18 +23,22 @@ class Model(object):
             return False
 
     def _get(self, id, data, callback, **cb_kwargs):
+        print("Model._get()")
         if callback:
             callback((id, data), **cb_kwargs)
 
     # set data for id here
     def _set(self, id, data):
+        print("Model._set()")
         self.data[id] = data
 
     def set(self, id, data):
+        print("Model.set()")
         self._set(id, data)
         self._notifyPresenters("set", id, data)
 
     def _notifyPresenters(self, method, id, data):
+        print("Model._notifyPresenters()")
         for p in self.presenters:
             p.modelEvent(self, (method, id, data))
 
@@ -39,10 +47,12 @@ class Model(object):
 class RestModel(Model):
     # Request can be UrlRequest from kivy.network.urlrequest or UrlRequest specified to your needs.
     def __init__(self, name, Request):
+        print("RestModel.__init__()")
         super(RestModel, self).__init__(name)
         self.Request = Request
         
     def get(self, id, url, callback=None, **cb_kwargs):
+        print("RestModel.get()")
         def on_success(req, data):
             self.set(id, data)
             self._get(id, data, callback, **cb_kwargs)
@@ -56,6 +66,7 @@ class RestModel(Model):
                 on_failure=on_failure, on_error=on_error)
     
     def post(self, url, data):
+        print("RestModel.post()")
         def on_success(req, data):
             self._notifyPresenters("post", None, data)
         def on_failure(req, data):
@@ -66,6 +77,7 @@ class RestModel(Model):
             on_success=on_success, on_failure=on_failure, on_error=on_error)
 
     def put(self, id, url, data, callback=None, **cb_kwargs):
+        print("RestModel.put()")
         def on_success(req, data):
             self._notifyPresenters("put", id, data)
             if callback:
@@ -79,13 +91,17 @@ class RestModel(Model):
                 on_success=on_success, on_failure=on_failure, on_error=on_error)
 
     def delete(self, id, url, callback=None, **cb_kwargs):
+        print("RestModel.delete()")
         def on_success(req, data):
+            print("RestModel.delete.on_success()")
             self._notifyPresenters("delete", id, data)
             if callback:
                 callback(id, data, **cb_kwargs)
         def on_failure(req, data):
+            print("RestModel.delete.on_failure()")
             self._notifyPresenters("delete-failure", id, data)
         def on_error(req, data):
+            print("RestModel.delete.on_error()")
             self._notifyPresenters("delete-error", id, data)
         self.Request(url + str(id), method="DELETE", on_success=on_success,
             on_failure=on_failure, on_error=on_error)
@@ -93,18 +109,22 @@ class RestModel(Model):
 
 class View(Screen):
     def __init__(self, presenter, **kwargs):
+        print("View.__init__()")
         super(View, self).__init__(**kwargs)
         self.presenter = presenter
 
     # update view based on new data here
     def _update(self, data):
+        print("View.update()")
         pass
 
     def update(self, data):
+        print("View.data()")
         self._update(data)
         self.canvas.ask_update()
 
     def event(self, e):
+        print("View.event()")
         self.presenter.userEvent(e)
 
 # A View is just a small wrapper around kivy screens; no need for lots of functionality here.
@@ -113,27 +133,33 @@ class View(Screen):
 class Runnable(object):
     # hook for kivy's on_pause
     def onPause(self):
+        print("Runnable.onPause()")
         return True
 
     # hook for kivy's on_resume
     def onResume(self):
+        print("Runnable.onResume()")
         pass
 
     # hook for kivy's on_start
     def onStart(self):
+        print("Runnable.onStart()")
         pass
 
     # hook for kivy's on_stop
     def onStop(self):
+        print("Runnable.onStop()")
         pass
 
     # generic event from app controller or other presenter
     def receive(self, e):
+        print("Runnable.receive()")
         pass
 
 
 class Presenter(Runnable):
     def __init__(self, ctrl, viewClass, models):
+        print("Presenter.__init__()")
         self.bus = ctrl.bus
         self.view = viewClass(self, name=self._name())
         ctrl.sm.add_widget(self.view)
@@ -145,17 +171,21 @@ class Presenter(Runnable):
 
     # provide name here
     def _name(self):
+        print("Presenter._name()")
         raise Exception("not implemented")
 
     def emit(self, event):
+        print("Presenter.emit()")
         self.bus.emit(event)
 
     # associated view notifies us of user event, update model appropriately
     def userEvent(self, e):
+        print("Presenter.userEvent()")
         pass
 
     # model notfies us of update, refresh the view
     def modelEvent(self, model, e=None):
+        print("Presenter.modelEvent()")
         pass
 
 
@@ -163,15 +193,19 @@ class AppController(Runnable):
     def __init__(self):
         class EventBus(object):
             def __init__(self):
+                print("AppController.__init__.EventBus.__init__()")
                 self.listeners = []
 
             def register(self, obj):
+                print("AppController.__init__.EventBus.register()")
                 self.listeners.append(obj)
 
             def emit(self, event):
+                print("AppController.__init__.EventBus.emit()")
                 for listener in self.listeners:
                     listener.receive(event)
 
+        print("AppController.__init__()")
         self.bus = EventBus()
         self.bus.register(self)
         self.sm = ScreenManager()
@@ -184,23 +218,29 @@ class AppController(Runnable):
 
         class KivyMVPApp(App):
             def build(self):
+                print("AppController.__init__.KivyMVPApp.build()")
                 return sm
             def on_pause(self):
+                print("AppController.__init__.KivyMVPApp.on_pause()")
                 for listener in bus.listeners:
                     if not listener.onPause():
                         return False
                 return True
             def on_resume(self):
+                print("AppController.__init__.KivyMVPApp.on_resume()")
                 for listener in bus.listeners:
                     listener.onResume()
             def on_start(self):
+                print("AppController.__init__.KivyMVPApp.on_start()")
                 EventLoop.window.bind(on_keyboard=self.hook_keyboard)
                 for listener in bus.listeners:
                     listener.onStart()
             def on_stop(self):
+                print("AppController.__init__.KivyMVPApp.on_stop()")
                 for listener in bus.listeners:
                     listener.onStop()
             def hook_keyboard(self, window, key, *largs):
+                print("AppController.__init__.KivyMVPApp.hook_keyboard()")
                 if key in key_hooks:
                     return key_hooks[key]()
                 return True
@@ -208,19 +248,24 @@ class AppController(Runnable):
         self.app = KivyMVPApp()
 
     def hook_key(self, key, func):
+        print("AppController.hook_key()")
         self.key_hooks[key] = func
 
     def current(self):
+        print("AppController.current()")
         return self.sm.current
 
     def switch(self, name):
+        print("AppController.switch()")
         self.sm.current = name
 
     def go(self, first):
+        print("AppController.go()")
         self.sm.current = first
         self.app.run()
 
     def add(self, pres):
+        print("AppController.add()")
         if pres._name() in self.presenters:
             raise Exception("presenter with name %s exists" % pres._name())
         self.presenters[pres._name()] = pres
@@ -228,6 +273,7 @@ class AppController(Runnable):
 
 
 if __name__ == '__main__':
+    print("__main__()")
     from kivy.graphics import Color, Rectangle
     from kivy.uix.button import Button
     from kivy.uix.floatlayout import FloatLayout
@@ -237,6 +283,7 @@ if __name__ == '__main__':
     # the two presenters, if it receives one.
     class TestAppController(AppController):
         def receive(self, e):
+            print("__main__.TestAppController.receive()")
             if e == "switch":
                 for p in self.presenters:
                     if self.current() != p:
@@ -263,20 +310,24 @@ if __name__ == '__main__':
     # number and instructs the view to update based on it.
     class BlackPresenter(Presenter):
         def _name(self):
+            print("__main__.BlackPresenter()")
             return "black"
 
         def userEvent(self, e):
+            print("__main__.userEvent()")
             if e == "done":
                 self.emit("switch")
             elif e == "add":
                 self.models["aSingleNumber"].get(0, self.add)
 
         def add(self, response):
+            print("__main__.add()")
             if response:
                 (id, data) = response
                 self.models["aSingleNumber"].set(id, data+1)
             
         def modelEvent(self, m, e=None):
+            print("__main__.modelEvent()")
             if e == None:
                 return
             method, id, data = e
@@ -290,20 +341,24 @@ if __name__ == '__main__':
     # number and instructs the view to update based on it.
     class WhitePresenter(Presenter):
         def _name(self):
+            print("__main__.WhitePresenter.name()")
             return "white"
 
         def userEvent(self, e):
+            print("__main__.WhitePresenter.userEvent()")
             if e == "done":
                 self.emit("switch")
             elif e == "subtract":
                 self.models["aSingleNumber"].get(0, self.subtract)
                 
         def subtract(self, response):
+            print("__main__.WhitePresenter.subtract()")
             if response:
                 (id, data) = response
                 self.models["aSingleNumber"].set(id, data-1)
 
         def modelEvent(self, m, e=None):
+            print("__main__.WhitePresenter.modelEvent()")
             if e == None:
                 return
             method, id, data = e
@@ -313,6 +368,7 @@ if __name__ == '__main__':
     # distinguish our two views.
     class ColorLayout(FloatLayout):
         def __init__(self, color, **kwargs):
+            print("__main__.ColorLayout.__init__()")
             super(ColorLayout, self).__init__(**kwargs)
             with self.canvas.before:
                 Color(color[0], color[1], color[2], color[3])
@@ -320,6 +376,7 @@ if __name__ == '__main__':
             self.bind(size=self._update_rect, pos=self._update_rect)
 
         def _update_rect(self, instance, value):
+            print("__main__.ColorLayout._update_rect()")
             self.rect.pos = instance.pos
             self.rect.size = instance.size
 
@@ -330,6 +387,7 @@ if __name__ == '__main__':
     # integrate into the MVP workflow.
     class BlackView(View):
         def __init__(self, presenter, **kwargs):
+            print("__main__.BlackView.__init__()")
             super(BlackView, self).__init__(presenter, **kwargs)
             with self.canvas:
                 f = ColorLayout((0,0,0,1))
@@ -346,12 +404,14 @@ if __name__ == '__main__':
                 self.add_widget(f)
 
         def _update(self, data):
+            print("__main__.BlackView._update()")
             self.l.text = data
 
     # The white view has a button "add" and a button "to_black" on a white background.
     # Pressing "add" triggers emits  the event "add" and pressing "to black" triggers "done".
     class WhiteView(View):
         def __init__(self, presenter, **kwargs):
+            print("__main__.WhiteView.__init__()")
             super(WhiteView, self).__init__(presenter, **kwargs)
             with self.canvas:
                 f = ColorLayout((1,1,1,1))
@@ -368,6 +428,7 @@ if __name__ == '__main__':
                 self.add_widget(f)
 
         def _update(self, data):
+            print("__main__.WhiteView._update()")
             self.l.text = data
 
     black_pres = BlackPresenter(ctrl, BlackView, [model])
