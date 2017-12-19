@@ -271,9 +271,8 @@ class AppController(Runnable):
         self.presenters[pres._name()] = pres
         self.bus.register(pres)
 
-
-if __name__ == '__main__':
-    print("__main__()")
+def main():
+    print("main()")
     from kivy.graphics import Color, Rectangle
     from kivy.uix.button import Button
     from kivy.uix.floatlayout import FloatLayout
@@ -439,3 +438,7 @@ if __name__ == '__main__':
 
     # Start black.
     ctrl.go('black')
+
+if __name__ == '__main__':
+    print("kivymvp.__main__()")
+    main()
