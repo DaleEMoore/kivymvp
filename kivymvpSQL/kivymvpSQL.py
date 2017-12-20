@@ -190,6 +190,9 @@ class Presenter(Runnable):
 
 
 class AppController(Runnable):
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        print("AppController.__exit__()")
+        pass
     def __init__(self):
         class EventBus(object):
             def __init__(self):

@@ -12,7 +12,18 @@ if __name__ == '__main__':
     #   2: kivymvpSQL
 
     print("kivymvp.main()")
-    kivymvp.main()
+
+    # gets " AttributeError: __exit__". Fixed by adding __exit__ to AppController class.
+    with kivymvp.main() as first:
+        print("kivymvp.main in with")
+        pass
+
+    # doesn't run kivymvp.main() then kivymvpSQL.main(). 2nd run doesn't work; no listeners
+    #f = kivymvp.main()
+
+    # doesn't run kivymvp.main() then kivymvpSQL.main(). 2nd run doesn't work; no listeners
+    #kivymvp.main()
+
     # TODO; 2nd run doesn't work
     """
     __main__.ColorLayout._update_rect()
@@ -22,6 +33,10 @@ if __name__ == '__main__':
     """
     # I wonder if there's something that needs clearing or resetting?
     print("kivymvpSQL.main()")
-    kivymvpSQL.main()
+    with kivymvpSQL.main() as second:
+        print("kivymvpSQL.main in with")
+        pass
+    #f = kivymvpSQL.main()
+    #kivymvpSQL.main()
     print("Done")
 
