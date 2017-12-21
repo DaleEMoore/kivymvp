@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 
 # Let user pick original kivymvp or kivymvpSQL.
+# Switch back and forth between kivymvp and kivymvpSQL?
+# https://stackoverflow.com/questions/29332868/is-it-possible-to-read-from-more-than-one-kv-file-in-kivy-app
+# https://stackoverflow.com/questions/31458331/running-multiple-kivy-apps-at-same-time-that-communicate-with-each-other
+# https://stackoverflow.com/questions/24335870/prevent-the-exit-of-a-kivy-app-on-android-with-the-escape-arrow
 
 import kivymvp
 import kivymvpSQL
